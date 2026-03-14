@@ -69,6 +69,26 @@ if [[ "$choice" == "3" ]]; then
     exit 0
 fi
 
+# Function to ensure uv is installed and in PATH
+ensure_uv() {
+    echo "Checking for uv..."
+    # Check if uv is in the current PATH
+    if ! command -v uv &> /dev/null; then
+        # Try adding common installation paths
+        export PATH="$HOME/.local/bin:$PATH"
+        export PATH="$HOME/.cargo/bin:$PATH"
+    fi
+
+    if ! command -v uv &> /dev/null; then
+        echo "uv not found. Installing uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        # Re-export path after installation
+        export PATH="$HOME/.local/bin:$PATH"
+    else
+        echo "uv is already installed at: $(command -v uv)"
+    fi
+}
+
 # Option 1: New instance (install everything)
 if [[ "$choice" == "1" ]]; then
     echo "Selected: New Instance - Installing all dependencies..."
@@ -85,14 +105,15 @@ if [[ "$choice" == "1" ]]; then
     # Install Python3 pip
     sudo apt install -y python3-pip
 
-    # Install uv for Python package management
-    echo "Installing uv..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    
-    # Install Virtualenv
+    # Install Virtualenv (system package)
     sudo apt-get install python3-venv -y
+    
+    # Ensure uv is installed
+    ensure_uv
 else
     echo "Selected: Old Instance - Skipping system dependencies installation..."
+    # Even for old instances, we must ensure uv is available
+    ensure_uv
 fi
 
 # Common steps for both new and old instances
@@ -133,12 +154,22 @@ sudo nginx -t
 sudo systemctl restart nginx
 sudo systemctl reload nginx
 
-# Create/Sync virtual environment using uv
+# Create virtual environment and sync using uv
 echo "Syncing dependencies with uv..."
 cd "$DEPLOY_PATH/$TARGET_DIR"
 
-# uv sync handles venv creation and package installation in one go
+# Ensure we are using the venv specified in gunicorn service
+# uv sync will create/update the .venv in the current directory if not redirected
+# We'll use the environment variable to point uv to the correct venv
+export UV_PROJECT_ENVIRONMENT="$DEPLOY_PATH/$TARGET_DIR/venv"
+
+# Sync dependencies from pyproject.toml / uv.lock
 uv sync --frozen
+
+# Change ownership and permissions of the newly created/updated venv
+sudo chown -R $USER:$USER "$DEPLOY_PATH/$TARGET_DIR/venv"
+sudo chmod -R 755 "$DEPLOY_PATH/$TARGET_DIR/venv"
+sudo chmod -R 755 "$DEPLOY_PATH/$TARGET_DIR/server"
 
 # Migrate
 echo "Migrating DB..."
