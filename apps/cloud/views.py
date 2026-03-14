@@ -4,11 +4,11 @@ from django.views.generic import CreateView, ListView
 from .forms import CloudMediaForm
 from .models import CloudMedia
 from django.template.loader import render_to_string
-
-
 from django.utils import timezone
 from datetime import timedelta
 from collections import OrderedDict
+from django.http import JsonResponse
+from django.shortcuts import redirect
 
 class MediaListView(LoginRequiredMixin, ListView):
     model = CloudMedia
@@ -43,13 +43,6 @@ class MediaListView(LoginRequiredMixin, ListView):
         context["grouped_media"] = grouped_items
         return context
 
-
-from django.http import JsonResponse
-
-
-from django.shortcuts import redirect
-
-
 class MediaUploadView(LoginRequiredMixin, CreateView):
     model = CloudMedia
     form_class = CloudMediaForm
@@ -62,7 +55,6 @@ class MediaUploadView(LoginRequiredMixin, CreateView):
         form = super().get_form(form_class)
         if 'media_type' in form.fields:
             form.fields['media_type'].required = False
-            # Also ensure it doesn't have the default 'required' attribute in HTML
             form.fields['media_type'].widget.attrs.pop('required', None)
         return form
 
@@ -95,3 +87,15 @@ class MediaUploadView(LoginRequiredMixin, CreateView):
                 "errors": json.loads(form.errors.as_json())
             }, status=400)
         return redirect("cloud:media_list")
+
+class MediaDeleteView(LoginRequiredMixin, CreateView):
+    model = CloudMedia
+
+    def post(self, request, *args, **kwargs):
+        media_id = kwargs.get("pk")
+        try:
+            media = CloudMedia.objects.get(pk=media_id, user=request.user)
+            media.delete()
+            return JsonResponse({"status": "success"})
+        except CloudMedia.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Media not found"}, status=404)

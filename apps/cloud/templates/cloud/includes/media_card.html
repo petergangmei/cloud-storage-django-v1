@@ -1,5 +1,6 @@
 <div class="media-card" 
-     onclick="openViewer('{{ item.file.url }}', '{{ item.media_type }}', '{{ item.title }}')"
+     data-id="{{ item.id }}"
+     onclick="openViewer('{{ item.file.url }}', '{{ item.media_type }}', '{{ item.title }}', '{{ item.id }}')"
      onmouseenter="playPreview(this)" 
      onmouseleave="pausePreview(this)">
     {% if item.media_type == 'IMAGE' %}

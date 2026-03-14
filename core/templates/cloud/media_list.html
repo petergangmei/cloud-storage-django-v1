@@ -12,6 +12,15 @@
     --glass-blur: blur(15px);
   }
 
+  /* Ensure delete modal appears ABOVE the viewer (z-index: 2000) */
+  #deleteConfirmModal {
+    z-index: 2050;
+  }
+  #deleteConfirmModal + .modal-backdrop,
+  .modal-backdrop {
+    z-index: 2040;
+  }
+
   .gallery-container {
     padding: 20px 0;
   }
@@ -427,7 +436,7 @@
       <button class="viewer-btn" title="Favorite"><i class="far fa-star"></i></button>
       <button class="viewer-btn" title="Edit"><i class="fas fa-pen"></i></button>
       <button class="viewer-btn" title="Info"><i class="fas fa-info-circle"></i></button>
-      <button class="viewer-btn" title="Delete"><i class="far fa-trash-alt"></i></button>
+      <button class="viewer-btn" title="Delete" id="viewerDeleteBtn"><i class="far fa-trash-alt"></i></button>
       <button class="viewer-btn" title="More"><i class="fas fa-ellipsis-v"></i></button>
     </div>
   </div>
@@ -447,6 +456,29 @@
   <div class="viewer-info">
     <h5 id="viewerTitle" class="mb-1"></h5>
     <div id="viewerDate" class="tiny-text opacity-50"></div>
+  </div>
+</div>
+
+<!-- Bootstrap Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark border-secondary shadow-lg">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white" id="deleteConfirmModalLabel">Confirm Deletion</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-secondary">
+        <div class="text-center mb-4">
+          <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+          <h4 class="text-white">Delete this media?</h4>
+          <p>This action cannot be undone. The file will be permanently removed from your cloud storage.</p>
+        </div>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger px-4 rounded-pill" id="confirmDeleteBtn">Delete Permanently</button>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock content %} {% block inline_javascript %}
@@ -500,16 +532,25 @@
   updateGalleryData();
 
   // Viewer Logic
-  function openViewer(url, type, title) {
+  function openViewer(url, type, title, id) {
     const container = document.getElementById("viewerMediaContainer");
     const modal = document.getElementById("viewerModal");
     const titleElem = document.getElementById("viewerTitle");
+    const deleteBtn = document.getElementById("viewerDeleteBtn");
 
     // Refresh gallery data to ensure index is correct (especially after AJAX uploads)
     updateGalleryData();
     currentMediaIndex = galleryItems.findIndex((item) => item.url === url);
 
     renderViewerMedia(url, type, title);
+    
+    // Set delete listener to show Bootstrap modal
+    deleteBtn.onclick = () => {
+      mediaIdToDelete = id;
+      const modalEl = document.getElementById('deleteConfirmModal');
+      const deleteModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      deleteModal.show();
+    };
 
     modal.style.display = "flex";
     setTimeout(() => modal.classList.add("active"), 10);
@@ -561,6 +602,66 @@
       container.innerHTML = "";
     }, 300);
     document.body.style.overflow = "auto";
+  }
+
+  let mediaIdToDelete = null;
+
+  // Initialize Modal Confirmation Logic
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (mediaIdToDelete) {
+      executeDelete(mediaIdToDelete);
+      // Close the modal
+      const modalInstance = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+      if (modalInstance) modalInstance.hide();
+    }
+  });
+
+  function executeDelete(id) {
+    const formData = new FormData();
+    formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+    fetch(`/cloud/delete/${id}/`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        const card = document.querySelector(`.media-card[data-id="${id}"]`);
+        if (card) {
+          const section = card.closest('.date-section');
+          card.remove();
+          
+          // If section is empty, remove it
+          if (section && section.querySelector('.gallery-grid').children.length === 0) {
+            section.remove();
+          }
+          
+          // If no sections left, show empty state
+          const sectionsContainer = document.getElementById("gallerySections");
+          if (sectionsContainer && sectionsContainer.children.length === 0) {
+            sectionsContainer.innerHTML = `
+              <div id="emptyState" class="col-12 text-center py-5">
+                <i class="fas fa-images fa-4x text-secondary mb-4 opacity-50"></i>
+                <h3 class="text-secondary">No media found</h3>
+                <p class="text-muted">Drag and drop files anywhere or click the Upload button</p>
+              </div>
+            `;
+          }
+        }
+        closeViewer();
+        updateGalleryData();
+      } else {
+        alert("Error deleting media: " + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert("A network error occurred.");
+    });
   }
 
   // Upload Handling
