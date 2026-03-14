@@ -72,13 +72,24 @@ if [[ "$choice" == "1" ]]; then
     # Install Nginx
     sudo apt install -y nginx
 
+    # Install PostgreSQL development packages (required for psycopg2)
+    sudo apt-get install -y postgresql-server-dev-all libpq-dev
+
     # Install Python3 pip
     sudo apt install -y python3-pip
+
+    # Install uv for Python package management
+    echo "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    # Ensure uv is in the path for the current script
+    export PATH="$HOME/.local/bin:$PATH"
 
     # Install Virtualenv
     sudo apt-get install python3-venv -y
 else
     echo "Selected: Old Instance - Skipping system dependencies installation..."
+    # Ensure uv is in the path even for old instances
+    export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Common steps for both new and old instances
@@ -119,42 +130,32 @@ sudo nginx -t
 sudo systemctl restart nginx
 sudo systemctl reload nginx
 
-# Create virtual environment
-echo "Creating virtual environment..."
-python3 -m venv "$DEPLOY_PATH/$TARGET_DIR/venv"
+# Create virtual environment using uv
+echo "Creating virtual environment with uv..."
+cd "$DEPLOY_PATH/$TARGET_DIR"
+uv venv "$DEPLOY_PATH/$TARGET_DIR/venv"
 
 # Change ownership and permissions
 sudo chown -R $USER:$USER "$DEPLOY_PATH/$TARGET_DIR/venv"
 sudo chmod -R 755 "$DEPLOY_PATH/$TARGET_DIR/venv"
 sudo chmod -R 755 "$DEPLOY_PATH/$TARGET_DIR/server"
 
-# Install requirements
-echo "Installing requirements..."
+# Install requirements using uv
+echo "Installing requirements with uv..."
 source "$DEPLOY_PATH/$TARGET_DIR/venv/bin/activate"
 
-export PIP_BREAK_SYSTEM_PACKAGES=1
-
-# Clear pip cache to avoid conflicts
-pip cache purge
-
-# Install core packages first
-pip install psycopg2-binary gunicorn 
-
-# Install specific versions to avoid conflicts
-
-# Install all requirements
-# pip install -r "/home/ubuntu/$TARGET_DIR/requirements/local.txt"
-pip install -r "$DEPLOY_PATH/$TARGET_DIR/requirements/production.txt"
+# Sync dependencies from pyproject.toml / uv.lock
+uv sync --frozen
 
 # Migrate
 echo "Migrating..."
-# python "$DEPLOY_PATH/$TARGET_DIR/manage.py" migrate --settings=config.settings.production
+uv run python manage.py migrate --settings=config.settings.production
 
-# Collect static (uncomment if needed)
-# echo "Collecting static files..."
-# python "$DEPLOY_PATH/$TARGET_DIR/manage.py" collectstatic --settings=core.settings.prod
+# Collect static
+echo "Collecting static files..."
+uv run python manage.py collectstatic --noinput --settings=config.settings.production
 
-# Restart gunicorn
+# Restart services
 echo "Restarting Gunicorn and Nginx..."
 sudo systemctl daemon-reload
 sudo systemctl restart $PROJECT_NAME.service

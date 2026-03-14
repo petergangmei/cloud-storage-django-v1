@@ -40,7 +40,7 @@ nano server/deploy.env
 ```
 
 ### 3. Run the Setup Script
-The script handles everything: installing Nginx/Python, setting up Virtualenvs, and configuring Systemd services.
+The script handles everything: installing Nginx, PostgreSQL dev packages, **uv**, setting up Virtualenvs with `uv`, and configuring Systemd services.
 
 ```bash
 chmod +x server/setup.sh
