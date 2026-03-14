@@ -187,3 +187,9 @@ SPECTACULAR_SETTINGS["SERVERS"] = [
 ]
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Cloudflare tunnel - trust forwarded headers
+IPWARE_META_PRECEDENCE_ORDER = (
+    "HTTP_CF_CONNECTING_IP",
+    "HTTP_X_FORWARDED_FOR",
+    "REMOTE_ADDR",
+)
