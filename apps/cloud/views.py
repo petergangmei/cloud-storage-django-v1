@@ -14,6 +14,9 @@ class MediaListView(LoginRequiredMixin, ListView):
         return CloudMedia.objects.filter(user=self.request.user)
 
 
+from django.http import JsonResponse
+
+
 class MediaUploadView(LoginRequiredMixin, CreateView):
     model = CloudMedia
     form_class = CloudMediaForm
@@ -22,7 +25,6 @@ class MediaUploadView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        # Simple auto-detection of media type if not provided or to be sure
         file = form.cleaned_data.get("file")
         if file:
             content_type = file.content_type
@@ -30,4 +32,15 @@ class MediaUploadView(LoginRequiredMixin, CreateView):
                 form.instance.media_type = CloudMedia.MediaType.VIDEO
             else:
                 form.instance.media_type = CloudMedia.MediaType.IMAGE
-        return super().form_valid(form)
+        
+        response = super().form_valid(form)
+        
+        if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"status": "success", "url": self.success_url})
+        return response
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"status": "error", "errors": form.errors.as_json()}, status=400)
+        return response
