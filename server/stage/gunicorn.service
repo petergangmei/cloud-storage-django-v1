@@ -12,9 +12,6 @@ ExecStart={{DEPLOY_PATH}}/{{STAGE_FOLDER}}/venv/bin/gunicorn \
     --max-requests 1000 \
     --max-requests-jitter 50 \
     --forwarded-allow-ips="*" \
-    --access-logfile - \
-    --error-logfile - \
-    --log-level debug \
     --bind unix:{{DEPLOY_PATH}}/{{STAGE_FOLDER}}/app.sock \
     config.wsgi:application
 
