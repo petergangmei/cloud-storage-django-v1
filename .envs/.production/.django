@@ -1,0 +1,46 @@
+# General
+# ------------------------------------------------------------------------------
+# DJANGO_READ_DOT_ENV_FILE=True
+DJANGO_SETTINGS_MODULE=config.settings.production
+DJANGO_SECRET_KEY=rjJmdkkk2QYoafKs8L3JOJ4KKvcOu4i0iHzmHErESc5Kx9jZzM8jMDg1NoHK4SL9
+DJANGO_ADMIN_URL=t9ijXxKfcr2zXClHDx2h2hNPYumD9xx3/
+DJANGO_ALLOWED_HOSTS=.cloud.mepeter.com
+
+# Security
+# ------------------------------------------------------------------------------
+# TIP: better off using DNS, however, redirect is OK too
+DJANGO_SECURE_SSL_REDIRECT=False
+
+# Email
+# ------------------------------------------------------------------------------
+DJANGO_SERVER_EMAIL=
+
+BREVO_API_KEY=
+
+
+# AWS
+# ------------------------------------------------------------------------------
+DJANGO_AWS_ACCESS_KEY_ID=
+DJANGO_AWS_SECRET_ACCESS_KEY=
+DJANGO_AWS_STORAGE_BUCKET_NAME=
+
+# django-allauth
+# ------------------------------------------------------------------------------
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+# Gunicorn
+# ------------------------------------------------------------------------------
+WEB_CONCURRENCY=4
+
+
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
+
+# Celery
+# ------------------------------------------------------------------------------
+
+# Flower
+CELERY_FLOWER_USER=bidBZXCTqCkjIWrgyLqHGZfEmSCpjqCi
+CELERY_FLOWER_PASSWORD=eSqOcvEFxPFnw9rT7l4XRQVZLOI6z4eydb2GkjJIJtjGz0l96NabFixLPA4ixBWO
+
