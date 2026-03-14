@@ -1,8 +1,13 @@
 <div class="media-card" 
      data-id="{{ item.id }}"
-     onclick="openViewer('{{ item.file.url }}', '{{ item.media_type }}', '{{ item.title }}', '{{ item.id }}')"
+     onclick="handleCardClick(event, '{{ item.file.url }}', '{{ item.media_type }}', '{{ item.title }}', '{{ item.id }}')"
      onmouseenter="playPreview(this)" 
      onmouseleave="pausePreview(this)">
+    
+    <div class="selection-circle" onclick="toggleSelection(event, '{{ item.id }}')">
+        <i class="fas fa-check"></i>
+    </div>
+
     {% if item.media_type == 'IMAGE' %}
         <img src="{{ item.file.url }}" alt="{{ item.title }}" loading="lazy">
     {% else %}

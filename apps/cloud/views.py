@@ -93,9 +93,22 @@ class MediaDeleteView(LoginRequiredMixin, CreateView):
 
     def post(self, request, *args, **kwargs):
         media_id = kwargs.get("pk")
+        ids = request.POST.getlist("ids[]")
+        
+        if not media_id and not ids:
+            return JsonResponse({"status": "error", "message": "No media specified"}, status=400)
+            
         try:
-            media = CloudMedia.objects.get(pk=media_id, user=request.user)
-            media.delete()
+            if ids:
+                # Bulk delete
+                media_items = CloudMedia.objects.filter(pk__in=ids, user=request.user)
+                media_items.delete()
+            else:
+                # Single delete
+                media = CloudMedia.objects.get(pk=media_id, user=request.user)
+                media.delete()
             return JsonResponse({"status": "success"})
         except CloudMedia.DoesNotExist:
             return JsonResponse({"status": "error", "message": "Media not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
