@@ -182,7 +182,6 @@
         border: 5px dashed var(--bs-primary);
         z-index: 6000; /* Higher than toast and viewer */
         display: none;
-        pointer-events: none;
         align-items: center;
         justify-content: center;
         backdrop-filter: blur(4px);
@@ -377,6 +376,16 @@ const filesCount = document.getElementById('filesCount');
 window.addEventListener('dragenter', (e) => {
     e.preventDefault();
     dragOverlay.style.display = 'flex';
+});
+
+// CRITICAL: Prevent default on window to stop browser from opening the file
+window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragOverlay.style.display = 'none';
 });
 
 dragOverlay.addEventListener('dragover', (e) => {
