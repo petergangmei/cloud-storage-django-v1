@@ -69,6 +69,19 @@ if [[ "$choice" == "3" ]]; then
     exit 0
 fi
 
+# Function to ensure build dependencies are present
+ensure_build_deps() {
+    echo "Checking for PostgreSQL development headers..."
+    if ! command -v pg_config &> /dev/null; then
+        echo "PostgreSQL headers (pg_config) not found. This is required to build psycopg[c]."
+        echo "Installing libpq-dev and build-essential..."
+        sudo apt-get update
+        sudo apt-get install -y postgresql-server-dev-all libpq-dev build-essential
+    else
+        echo "PostgreSQL headers found at: $(command -v pg_config)"
+    fi
+}
+
 # Function to ensure uv is installed and in PATH
 ensure_uv() {
     echo "Checking for uv..."
@@ -99,8 +112,8 @@ if [[ "$choice" == "1" ]]; then
     # Install Nginx
     sudo apt install -y nginx
 
-    # Install PostgreSQL development packages (required for psycopg2)
-    sudo apt-get install -y postgresql-server-dev-all libpq-dev
+    # Install PostgreSQL development packages and build tools
+    ensure_build_deps
 
     # Install Python3 pip
     sudo apt install -y python3-pip
@@ -111,8 +124,9 @@ if [[ "$choice" == "1" ]]; then
     # Ensure uv is installed
     ensure_uv
 else
-    echo "Selected: Old Instance - Skipping system dependencies installation..."
-    # Even for old instances, we must ensure uv is available
+    echo "Selected: Old Instance - Skipping main system dependencies installation..."
+    # Even for old instances, we MUST have these build tools for psycopg[c]
+    ensure_build_deps
     ensure_uv
 fi
 
