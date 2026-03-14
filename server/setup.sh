@@ -52,11 +52,13 @@ if [[ "$env_choice" == "1" ]]; then
     ENV_FOLDER="stage"
     TARGET_DIR="$STAGE_FOLDER"
     DOMAIN="$STAGE_DOMAIN"
+    SETTINGS_MODULE="config.settings.stage"
     echo "Selected environment: Stage (Target: $DEPLOY_PATH/$TARGET_DIR)"
 else
     ENV_FOLDER="live"
     TARGET_DIR="$LIVE_FOLDER"
     DOMAIN="$LIVE_DOMAIN"
+    SETTINGS_MODULE="config.settings.production"
     echo "Selected environment: Live (Target: $DEPLOY_PATH/$TARGET_DIR)"
 fi
 
@@ -194,11 +196,11 @@ sudo chmod -R 755 "$DEPLOY_PATH/$TARGET_DIR/server"
 
 # Migrate
 echo "Migrating DB..."
-uv run python manage.py migrate --settings=config.settings.production
+uv run python manage.py migrate --settings=$SETTINGS_MODULE
 
 # Collect static
 echo "Collecting static files..."
-uv run python manage.py collectstatic --noinput --settings=config.settings.production
+uv run python manage.py collectstatic --noinput --settings=$SETTINGS_MODULE
 
 # Restart services
 echo "Restarting Gunicorn and Nginx..."
