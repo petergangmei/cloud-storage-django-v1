@@ -6,486 +6,510 @@
 {% block css %}
 {{ block.super }}
 <style>
-    :root {
-        --glass-bg: rgba(255, 255, 255, 0.05);
-        --glass-border: rgba(255, 255, 255, 0.1);
-        --glass-blur: blur(15px);
-    }
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-blur: blur(15px);
+  }
 
-    .gallery-container {
-        padding: 20px 0;
-    }
+  .gallery-container {
+    padding: 20px 0;
+  }
 
-    .gallery-header {
-        background: var(--glass-bg);
-        backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 20px 30px;
-        margin-bottom: 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+  .gallery-header {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 20px 30px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-    .user-pill {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 5px 15px;
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        font-size: 14px;
-    }
+  .user-pill {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 15px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+  }
 
-    .masonry-grid {
-        columns: 4 250px;
-        column-gap: 20px;
-    }
+  .masonry-grid {
+    columns: 4 250px;
+    column-gap: 20px;
+  }
 
-    .media-card {
-        break-inside: avoid;
-        margin-bottom: 20px;
-        border-radius: 15px;
-        overflow: hidden;
-        background: #1a1a1a;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-    }
+  .media-card {
+    break-inside: avoid;
+    margin-bottom: 20px;
+    border-radius: 15px;
+    overflow: hidden;
+    background: #1a1a1a;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+  }
 
-    .media-card:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-    }
+  .media-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+  }
 
-    .media-card img, .media-card video {
-        width: 100%;
-        display: block;
-        border-radius: 15px;
-    }
+  .media-card img,
+  .media-card video {
+    width: 100%;
+    display: block;
+    border-radius: 15px;
+  }
 
-    .media-type-icon {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: rgba(0,0,0,0.5);
-        backdrop-filter: blur(5px);
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 14px;
-    }
+  .media-type-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+  }
 
-    /* Viewer Modal */
-    .viewer-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.95);
-        z-index: 2000;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
+  /* Viewer Modal */
+  .viewer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
-    .viewer-modal.active {
-        display: flex;
-        opacity: 1;
-    }
+  .viewer-modal.active {
+    display: flex;
+    opacity: 1;
+  }
 
-    .viewer-content {
-        max-width: 90%;
-        max-height: 90%;
-        position: relative;
-    }
+  .viewer-content {
+    width: 95%;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
 
-    .viewer-close {
-        position: absolute;
-        top: 20px;
-        right: 30px;
-        color: white;
-        font-size: 40px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        z-index: 2100;
-    }
+  .viewer-content img,
+  .viewer-content video {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+  }
 
-    /* Upload UI - Non-blocking Toast */
-    .upload-progress-toast {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 320px;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 18px;
-        z-index: 5000;
-        display: none;
-        box-shadow: 0 15px 50px rgba(0,0,0,0.6);
-        color: white;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(400px);
-    }
+  .viewer-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 2100;
+  }
 
-    .upload-progress-toast.active {
-        display: block;
-        transform: translateX(0);
-    }
+  /* Upload UI - Non-blocking Toast */
+  .upload-progress-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 320px;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 18px;
+    z-index: 5000;
+    display: none;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+    color: white;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translateX(400px);
+  }
 
-    .upload-icon-small {
-        width: 45px;
-        height: 45px;
-        background: rgba(13, 110, 253, 0.15);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-    }
+  .upload-progress-toast.active {
+    display: block;
+    transform: translateX(0);
+  }
 
-    .progress-compact {
-        height: 6px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
-        overflow: hidden;
-        margin-top: 12px;
-    }
+  .upload-icon-small {
+    width: 45px;
+    height: 45px;
+    background: rgba(13, 110, 253, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
 
-    .progress-bar-compact {
-        height: 100%;
-        background: linear-gradient(90deg, var(--bs-primary), #00d2ff);
-        transition: width 0.3s ease;
-    }
+  .progress-compact {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
 
-    .tiny-text { font-size: 11px; }
+  .progress-bar-compact {
+    height: 100%;
+    background: linear-gradient(90deg, var(--bs-primary), #00d2ff);
+    transition: width 0.3s ease;
+  }
 
-    /* Drag & Drop Visuals */
-    .drop-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(13, 110, 253, 0.15);
-        border: 5px dashed var(--bs-primary);
-        z-index: 6000; /* Higher than toast and viewer */
-        display: none;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(4px);
-    }
+  .tiny-text {
+    font-size: 11px;
+  }
 
-    .drop-overlay-content {
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(15px);
-        padding: 50px;
-        border-radius: 30px;
-        text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
+  /* Drag & Drop Visuals */
+  .drop-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(13, 110, 253, 0.15);
+    border: 5px dashed var(--bs-primary);
+    z-index: 6000; /* Higher than toast and viewer */
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
 
-    .btn-upload-nav {
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        color: white;
-        backdrop-filter: blur(5px);
-        padding: 10px 20px;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-        font-weight: 500;
-    }
+  .drop-overlay-content {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(15px);
+    padding: 50px;
+    border-radius: 30px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
 
-    .btn-upload-nav:hover {
-        background: rgba(255, 255, 255, 0.15);
-        transform: translateY(-2px);
-        color: white;
-    }
+  .btn-upload-nav {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: white;
+    backdrop-filter: blur(5px);
+    padding: 10px 20px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+
+  .btn-upload-nav:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    color: white;
+  }
 </style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-{% endblock css %}
-
-{% block content %}
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+/>
+{% endblock css %} {% block content %}
 <div class="gallery-container">
-    <div class="gallery-header">
-        <div>
-            <h1 class="h3 mb-0">Cloud Gallery</h1>
-            <p class="text-secondary small mb-0">Secure cloud storage for your memories</p>
-        </div>
-        <div class="d-flex align-items-center">
-            <input type="file" id="globalFileInput" style="display: none;" multiple>
-            <button class="btn btn-upload-nav me-3" onclick="document.getElementById('globalFileInput').click()">
-                <i class="fas fa-plus me-2"></i>Upload Media
-            </button>
-            <div class="user-pill d-none d-md-flex">
-                <i class="fas fa-user-circle me-2"></i>
-                <span>{{ request.user.username }}</span>
-            </div>
-        </div>
+  <div class="gallery-header">
+    <div>
+      <h1 class="h3 mb-0">Cloud Gallery</h1>
+      <p class="text-secondary small mb-0">
+        Secure cloud storage for your memories
+      </p>
     </div>
+    <div class="d-flex align-items-center">
+      <input type="file" id="globalFileInput" style="display: none" multiple />
+      <button
+        class="btn btn-upload-nav me-3"
+        onclick="document.getElementById('globalFileInput').click()"
+      >
+        <i class="fas fa-plus me-2"></i>Upload Media
+      </button>
+      <div class="user-pill d-none d-md-flex">
+        <i class="fas fa-user-circle me-2"></i>
+        <span>{{ request.user.username }}</span>
+      </div>
+    </div>
+  </div>
 
-    <div class="masonry-grid" id="galleryGrid">
-        {% for item in media_items %}
-            {% include "cloud/includes/media_card.html" with item=item %}
-        {% empty %}
-            <div class="col-12 text-center py-5">
-                <i class="fas fa-images fa-4x text-secondary mb-4 opacity-50"></i>
-                <h3 class="text-secondary">No media found</h3>
-                <p class="text-muted">Drag and drop files anywhere or click the Upload button</p>
-            </div>
-        {% endfor %}
-    </div>
+  <div class="masonry-grid" id="galleryGrid">
+    {% for item in media_items %}
+      {% include "cloud/includes/media_card.html" with item=item %}
+    {% empty %}
+      <div class="col-12 text-center py-5">
+        <i class="fas fa-images fa-4x text-secondary mb-4 opacity-50"></i>
+        <h3 class="text-secondary">No media found</h3>
+        <p class="text-muted">Drag and drop files anywhere or click the Upload button</p>
+      </div>
+    {% endfor %}
+  </div>
 </div>
 
 <!-- Upload Progress Toast (Non-blocking) -->
 <div class="upload-progress-toast" id="uploadOverlay">
-    <div class="d-flex align-items-center mb-1">
-        <div class="upload-icon-small me-3">
-            <i class="fas fa-cloud-arrow-up text-primary"></i>
-        </div>
-        <div class="flex-grow-1 overflow-hidden">
-            <h6 class="mb-0 text-truncate" id="uploadStatus">Uploading...</h6>
-            <div class="tiny-text text-secondary" id="filesCount">Preparing...</div>
-        </div>
+  <div class="d-flex align-items-center mb-1">
+    <div class="upload-icon-small me-3">
+      <i class="fas fa-cloud-arrow-up text-primary"></i>
     </div>
-    <div class="progress-compact">
-        <div class="progress-bar-compact" id="progressBar" style="width: 0%"></div>
+    <div class="flex-grow-1 overflow-hidden">
+      <h6 class="mb-0 text-truncate" id="uploadStatus">Uploading...</h6>
+      <div class="tiny-text text-secondary" id="filesCount">Preparing...</div>
     </div>
-    <div class="mt-2 d-flex justify-content-between align-items-center">
-        <span class="tiny-text text-secondary" id="progressText">0%</span>
-        <span class="tiny-text text-primary">Background Upload</span>
-    </div>
+  </div>
+  <div class="progress-compact">
+    <div class="progress-bar-compact" id="progressBar" style="width: 0%"></div>
+  </div>
+  <div class="mt-2 d-flex justify-content-between align-items-center">
+    <span class="tiny-text text-secondary" id="progressText">0%</span>
+    <span class="tiny-text text-primary">Background Upload</span>
+  </div>
 </div>
 
 <!-- Drag Overlay -->
 <div class="drop-overlay" id="dragOverlay">
-    <div class="drop-overlay-content">
-        <i class="fas fa-cloud-upload-alt fa-5x text-primary mb-4"></i>
-        <h2 class="mb-2">Drop to Upload</h2>
-        <p class="text-secondary mb-0">Release to start the instant upload process</p>
-    </div>
+  <div class="drop-overlay-content">
+    <i class="fas fa-cloud-upload-alt fa-5x text-primary mb-4"></i>
+    <h2 class="mb-2">Drop to Upload</h2>
+    <p class="text-secondary mb-0">
+      Release to start the instant upload process
+    </p>
+  </div>
 </div>
 
 <!-- Media Viewer Modal -->
 <div class="viewer-modal" id="viewerModal">
-    <button class="viewer-close" onclick="closeViewer()">&times;</button>
-    <div class="viewer-content">
-        <div id="viewerMediaContainer"></div>
-        <h4 id="viewerTitle" class="mt-4 text-center text-white opacity-75"></h4>
-    </div>
+  <button class="viewer-close" onclick="closeViewer()">&times;</button>
+  <div class="viewer-content">
+    <div id="viewerMediaContainer"></div>
+    <h4 id="viewerTitle" class="mt-4 text-center text-white opacity-75"></h4>
+  </div>
 </div>
-{% endblock content %}
-
-{% block inline_javascript %}
+{% endblock content %} {% block inline_javascript %}
 <script>
-// Video Preview Logic
-function playPreview(card) {
-    const video = card.querySelector('video');
+  // Video Preview Logic
+  function playPreview(card) {
+    const video = card.querySelector("video");
     if (video) {
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => { /* Autoplay was prevented */ });
-        }
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          /* Autoplay was prevented */
+        });
+      }
     }
-}
+  }
 
-function pausePreview(card) {
-    const video = card.querySelector('video');
+  function pausePreview(card) {
+    const video = card.querySelector("video");
     if (video) {
-        video.pause();
-        video.currentTime = 0;
+      video.pause();
+      video.currentTime = 0;
     }
-}
+  }
 
-// Viewer Logic
-function openViewer(url, type, title) {
-    const container = document.getElementById('viewerMediaContainer');
-    const modal = document.getElementById('viewerModal');
-    const titleElem = document.getElementById('viewerTitle');
-    
-    container.innerHTML = '';
-    titleElem.innerText = title || '';
-    
-    if (type === 'IMAGE') {
-        const img = document.createElement('img');
-        img.src = url;
-        img.className = 'img-fluid rounded shadow-lg';
-        container.appendChild(img);
+  // Viewer Logic
+  function openViewer(url, type, title) {
+    const container = document.getElementById("viewerMediaContainer");
+    const modal = document.getElementById("viewerModal");
+    const titleElem = document.getElementById("viewerTitle");
+
+    container.innerHTML = "";
+    titleElem.innerText = title || "";
+
+    if (type === "IMAGE") {
+      const img = document.createElement("img");
+      img.src = url;
+      img.className = "rounded shadow-lg";
+      container.appendChild(img);
     } else {
-        const video = document.createElement('video');
-        video.src = url;
-        video.controls = true;
-        video.autoplay = true;
-        video.className = 'w-100 rounded shadow-lg';
-        container.appendChild(video);
+      const video = document.createElement("video");
+      video.src = url;
+      video.controls = true;
+      video.autoplay = true;
+      video.className = "rounded shadow-lg";
+      container.appendChild(video);
     }
-    
-    modal.style.display = 'flex';
-    setTimeout(() => modal.classList.add('active'), 10);
-    document.body.style.overflow = 'hidden';
-}
 
-function closeViewer() {
-    const modal = document.getElementById('viewerModal');
-    const container = document.getElementById('viewerMediaContainer');
-    modal.classList.remove('active');
+    modal.style.display = "flex";
+    setTimeout(() => modal.classList.add("active"), 10);
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeViewer() {
+    const modal = document.getElementById("viewerModal");
+    const container = document.getElementById("viewerMediaContainer");
+    modal.classList.remove("active");
     setTimeout(() => {
-        modal.style.display = 'none';
-        container.innerHTML = '';
+      modal.style.display = "none";
+      container.innerHTML = "";
     }, 300);
-    document.body.style.overflow = 'auto';
-}
+    document.body.style.overflow = "auto";
+  }
 
-// Upload Handling
-const globalFileInput = document.getElementById('globalFileInput');
-const dragOverlay = document.getElementById('dragOverlay');
-const uploadOverlay = document.getElementById('uploadOverlay');
-const progressBar = document.getElementById('progressBar');
-const progressText = document.getElementById('progressText');
-const uploadStatus = document.getElementById('uploadStatus');
-const filesCount = document.getElementById('filesCount');
-const galleryGrid = document.getElementById('galleryGrid');
+  // Upload Handling
+  const globalFileInput = document.getElementById("globalFileInput");
+  const dragOverlay = document.getElementById("dragOverlay");
+  const uploadOverlay = document.getElementById("uploadOverlay");
+  const progressBar = document.getElementById("progressBar");
+  const progressText = document.getElementById("progressText");
+  const uploadStatus = document.getElementById("uploadStatus");
+  const filesCount = document.getElementById("filesCount");
+  const galleryGrid = document.getElementById("galleryGrid");
 
-// Global Drag & Drop Listeners
-window.addEventListener('dragenter', (e) => {
+  // Global Drag & Drop Listeners
+  window.addEventListener("dragenter", (e) => {
     e.preventDefault();
-    dragOverlay.style.display = 'flex';
-});
+    dragOverlay.style.display = "flex";
+  });
 
-// CRITICAL: Prevent default on window to stop browser from opening the file
-window.addEventListener('dragover', (e) => {
+  // CRITICAL: Prevent default on window to stop browser from opening the file
+  window.addEventListener("dragover", (e) => {
     e.preventDefault();
-});
+  });
 
-window.addEventListener('drop', (e) => {
+  window.addEventListener("drop", (e) => {
     e.preventDefault();
-    dragOverlay.style.display = 'none';
-});
+    dragOverlay.style.display = "none";
+  });
 
-dragOverlay.addEventListener('dragover', (e) => {
+  dragOverlay.addEventListener("dragover", (e) => {
     e.preventDefault();
-});
+  });
 
-dragOverlay.addEventListener('dragleave', (e) => {
+  dragOverlay.addEventListener("dragleave", (e) => {
     if (e.relatedTarget === null || e.relatedTarget === window) {
-        dragOverlay.style.display = 'none';
+      dragOverlay.style.display = "none";
     }
-});
+  });
 
-dragOverlay.addEventListener('drop', (e) => {
+  dragOverlay.addEventListener("drop", (e) => {
     e.preventDefault();
-    dragOverlay.style.display = 'none';
+    dragOverlay.style.display = "none";
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-        handleFiles(files);
+      handleFiles(files);
     }
-});
+  });
 
-globalFileInput.addEventListener('change', (e) => {
+  globalFileInput.addEventListener("change", (e) => {
     if (globalFileInput.files.length > 0) {
-        handleFiles(globalFileInput.files);
+      handleFiles(globalFileInput.files);
     }
-});
+  });
 
-function handleFiles(filesArray) {
+  function handleFiles(filesArray) {
     const files = Array.from(filesArray);
     let currentIdx = 0;
 
     function uploadSingle() {
-        if (currentIdx >= files.length) {
-            uploadStatus.innerText = "Upload Complete!";
-            filesCount.innerText = `${files.length} items added`;
-            progressBar.style.width = '100%';
-            progressText.innerText = '100%';
-            
-            setTimeout(() => {
-                uploadOverlay.classList.remove('active');
-                // No more reload!
-                setTimeout(() => { uploadOverlay.style.display = 'none'; }, 400);
-            }, 1000);
-            return;
+      if (currentIdx >= files.length) {
+        uploadStatus.innerText = "Upload Complete!";
+        filesCount.innerText = `${files.length} items added`;
+        progressBar.style.width = "100%";
+        progressText.innerText = "100%";
+
+        setTimeout(() => {
+          uploadOverlay.classList.remove("active");
+          // No more reload!
+          setTimeout(() => {
+            uploadOverlay.style.display = "none";
+          }, 400);
+        }, 1000);
+        return;
+      }
+
+      const file = files[currentIdx];
+      currentIdx++;
+
+      // Update UI
+      uploadOverlay.style.display = "block";
+      setTimeout(() => uploadOverlay.classList.add("active"), 10);
+
+      uploadStatus.innerText = `Uploading ${file.name}`;
+      filesCount.innerText = `Item ${currentIdx} of ${files.length}`;
+      progressBar.style.width = "0%";
+      progressText.innerText = "0%";
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", '{% url "cloud:media_upload" %}');
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = percent + "%";
+          progressText.innerText = percent + "%";
+          if (percent === 100) {
+            uploadStatus.innerText = `Processing ${file.name}...`;
+          }
         }
+      };
 
-        const file = files[currentIdx];
-        currentIdx++;
-        
-        // Update UI
-        uploadOverlay.style.display = 'block';
-        setTimeout(() => uploadOverlay.classList.add('active'), 10);
-        
-        uploadStatus.innerText = `Uploading ${file.name}`;
-        filesCount.innerText = `Item ${currentIdx} of ${files.length}`;
-        progressBar.style.width = '0%';
-        progressText.innerText = '0%';
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 400) {
+          const response = JSON.parse(xhr.responseText);
+          if (response.html) {
+            // Prepend the new item to the grid
+            const temp = document.createElement("div");
+            temp.innerHTML = response.html.trim();
+            const newCard = temp.firstChild;
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            // Remove "No media found" if it exists
+            const emptyState = galleryGrid.querySelector(".col-12.text-center");
+            if (emptyState) emptyState.remove();
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '{% url "cloud:media_upload" %}');
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            galleryGrid.prepend(newCard);
+          }
+          uploadSingle(); // Chain the next upload
+        } else {
+          alert(`Error uploading ${file.name}`);
+          uploadOverlay.style.display = "none";
+        }
+      };
 
-        xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-                const percent = Math.round((e.loaded / e.total) * 100);
-                progressBar.style.width = percent + '%';
-                progressText.innerText = percent + '%';
-                if (percent === 100) {
-                    uploadStatus.innerText = `Processing ${file.name}...`;
-                }
-            }
-        };
+      xhr.onerror = () => {
+        alert("Network error. Please try again.");
+        uploadOverlay.style.display = "none";
+      };
 
-        xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.html) {
-                    // Prepend the new item to the grid
-                    const temp = document.createElement('div');
-                    temp.innerHTML = response.html.trim();
-                    const newCard = temp.firstChild;
-                    
-                    // Remove "No media found" if it exists
-                    const emptyState = galleryGrid.querySelector('.col-12.text-center');
-                    if (emptyState) emptyState.remove();
-                    
-                    galleryGrid.prepend(newCard);
-                }
-                uploadSingle(); // Chain the next upload
-            } else {
-                alert(`Error uploading ${file.name}`);
-                uploadOverlay.style.display = 'none';
-            }
-        };
-
-        xhr.onerror = () => {
-            alert("Network error. Please try again.");
-            uploadOverlay.style.display = 'none';
-        };
-
-        xhr.send(formData);
+      xhr.send(formData);
     }
 
     uploadSingle();
-}
+  }
 
-// keyboard ESC to close viewer
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeViewer();
-});
+  // keyboard ESC to close viewer
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeViewer();
+  });
 </script>
 {% endblock inline_javascript %}
