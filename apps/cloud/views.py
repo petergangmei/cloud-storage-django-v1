@@ -6,13 +6,42 @@ from .models import CloudMedia
 from django.template.loader import render_to_string
 
 
+from django.utils import timezone
+from datetime import timedelta
+from collections import OrderedDict
+
 class MediaListView(LoginRequiredMixin, ListView):
     model = CloudMedia
     template_name = "cloud/media_list.html"
     context_object_name = "media_items"
 
     def get_queryset(self):
-        return CloudMedia.objects.filter(user=self.request.user)
+        return CloudMedia.objects.filter(user=self.request.user).order_by("-created_at")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()
+        
+        # Group by date
+        grouped_items = OrderedDict()
+        today = timezone.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        for item in queryset:
+            date = item.created_at.date()
+            if date == today:
+                label = "Today"
+            elif date == yesterday:
+                label = f"Yesterday | {date.strftime('%a %d %B %Y')}"
+            else:
+                label = date.strftime("%A %d %B %Y")
+            
+            if label not in grouped_items:
+                grouped_items[label] = []
+            grouped_items[label].append(item)
+        
+        context["grouped_media"] = grouped_items
+        return context
 
 
 from django.http import JsonResponse

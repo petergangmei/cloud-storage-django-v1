@@ -37,35 +37,50 @@
     font-size: 14px;
   }
 
-  .masonry-grid {
-    columns: 4 250px;
-    column-gap: 20px;
+  .gallery-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+
+  .date-group-header {
+    margin: 40px 0 15px 0;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .date-group-header:first-child {
+    margin-top: 0;
   }
 
   .media-card {
-    break-inside: avoid;
-    margin-bottom: 20px;
-    border-radius: 15px;
+    height: 200px;
+    flex-grow: 1;
+    border-radius: 4px; /* Google Photos uses very small radii or none */
     overflow: hidden;
     background: #1a1a1a;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease;
     cursor: pointer;
     position: relative;
+    min-width: 150px;
   }
 
   .media-card:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    transform: scale(1.01);
+    z-index: 10;
   }
 
   .media-card img,
   .media-card video {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
-    border-radius: 15px;
     object-fit: cover;
+    border-radius: 0;
   }
 
   .media-type-icon {
@@ -348,11 +363,18 @@
     </div>
   </div>
 
-  <div class="masonry-grid" id="galleryGrid">
-    {% for item in media_items %}
-      {% include "cloud/includes/media_card.html" with item=item %}
+  <div id="gallerySections">
+    {% for label, items in grouped_media.items %}
+      <div class="date-section" data-date-label="{{ label }}">
+        <div class="date-group-header">{{ label }}</div>
+        <div class="gallery-grid">
+          {% for item in items %}
+            {% include "cloud/includes/media_card.html" with item=item %}
+          {% endfor %}
+        </div>
+      </div>
     {% empty %}
-      <div class="col-12 text-center py-5">
+      <div id="emptyState" class="col-12 text-center py-5">
         <i class="fas fa-images fa-4x text-secondary mb-4 opacity-50"></i>
         <h3 class="text-secondary">No media found</h3>
         <p class="text-muted">Drag and drop files anywhere or click the Upload button</p>
@@ -648,16 +670,36 @@
         if (xhr.status >= 200 && xhr.status < 400) {
           const response = JSON.parse(xhr.responseText);
           if (response.html) {
-            // Prepend the new item to the grid
+            // Create the new card element
             const temp = document.createElement("div");
             temp.innerHTML = response.html.trim();
             const newCard = temp.firstChild;
 
-            // Remove "No media found" if it exists
-            const emptyState = galleryGrid.querySelector(".col-12.text-center");
-            if (emptyState) emptyState.remove();
+            // Handle dynamic grouping
+            const targetSection = document.querySelector('.date-section[data-date-label="Today"]');
+            const sectionsContainer = document.getElementById("gallerySections");
 
-            galleryGrid.prepend(newCard);
+            if (targetSection) {
+              const grid = targetSection.querySelector(".gallery-grid");
+              grid.prepend(newCard);
+            } else {
+              // Create "Today" section if it doesn't exist
+              const newSection = document.createElement("div");
+              newSection.className = "date-section";
+              newSection.setAttribute("data-date-label", "Today");
+              newSection.innerHTML = `
+                <div class="date-group-header">Today</div>
+                <div class="gallery-grid"></div>
+              `;
+              const grid = newSection.querySelector(".gallery-grid");
+              grid.appendChild(newCard);
+              
+              // Remove empty state if present
+              const emptyState = document.getElementById("emptyState");
+              if (emptyState) emptyState.remove();
+              
+              sectionsContainer.prepend(newSection);
+            }
           }
           uploadSingle(); // Chain the next upload
         } else {
