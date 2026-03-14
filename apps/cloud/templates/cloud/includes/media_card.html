@@ -1,0 +1,15 @@
+<div class="media-card" 
+     onclick="openViewer('{{ item.file.url }}', '{{ item.media_type }}', '{{ item.title }}')"
+     onmouseenter="playPreview(this)" 
+     onmouseleave="pausePreview(this)">
+    {% if item.media_type == 'IMAGE' %}
+        <img src="{{ item.file.url }}" alt="{{ item.title }}" loading="lazy">
+    {% else %}
+        <video muted loop playsinline poster="{{ item.file.url }}#t=0.1">
+            <source src="{{ item.file.url }}" type="video/mp4">
+        </video>
+        <div class="media-type-icon">
+            <i class="fas fa-play"></i>
+        </div>
+    {% endif %}
+</div>

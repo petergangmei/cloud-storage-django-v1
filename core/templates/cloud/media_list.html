@@ -239,21 +239,7 @@
 
     <div class="masonry-grid" id="galleryGrid">
         {% for item in media_items %}
-            <div class="media-card" 
-                 onclick="openViewer('{{ item.file.url }}', '{{ item.media_type }}', '{{ item.title }}')"
-                 onmouseenter="playPreview(this)" 
-                 onmouseleave="pausePreview(this)">
-                {% if item.media_type == 'IMAGE' %}
-                    <img src="{{ item.file.url }}" alt="{{ item.title }}" loading="lazy">
-                {% else %}
-                    <video muted loop playsinline poster="{{ item.file.url }}#t=0.1">
-                        <source src="{{ item.file.url }}" type="video/mp4">
-                    </video>
-                    <div class="media-type-icon">
-                        <i class="fas fa-play"></i>
-                    </div>
-                {% endif %}
-            </div>
+            {% include "cloud/includes/media_card.html" with item=item %}
         {% empty %}
             <div class="col-12 text-center py-5">
                 <i class="fas fa-images fa-4x text-secondary mb-4 opacity-50"></i>
@@ -371,6 +357,7 @@ const progressBar = document.getElementById('progressBar');
 const progressText = document.getElementById('progressText');
 const uploadStatus = document.getElementById('uploadStatus');
 const filesCount = document.getElementById('filesCount');
+const galleryGrid = document.getElementById('galleryGrid');
 
 // Global Drag & Drop Listeners
 window.addEventListener('dragenter', (e) => {
@@ -426,7 +413,8 @@ function handleFiles(filesArray) {
             
             setTimeout(() => {
                 uploadOverlay.classList.remove('active');
-                setTimeout(() => location.reload(), 500);
+                // No more reload!
+                setTimeout(() => { uploadOverlay.style.display = 'none'; }, 400);
             }, 1000);
             return;
         }
@@ -464,6 +452,19 @@ function handleFiles(filesArray) {
 
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 400) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.html) {
+                    // Prepend the new item to the grid
+                    const temp = document.createElement('div');
+                    temp.innerHTML = response.html.trim();
+                    const newCard = temp.firstChild;
+                    
+                    // Remove "No media found" if it exists
+                    const emptyState = galleryGrid.querySelector('.col-12.text-center');
+                    if (emptyState) emptyState.remove();
+                    
+                    galleryGrid.prepend(newCard);
+                }
                 uploadSingle(); // Chain the next upload
             } else {
                 alert(`Error uploading ${file.name}`);

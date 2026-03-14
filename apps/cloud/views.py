@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, ListView
 from .forms import CloudMediaForm
 from .models import CloudMedia
+from django.template.loader import render_to_string
 
 
 class MediaListView(LoginRequiredMixin, ListView):
@@ -49,7 +50,12 @@ class MediaUploadView(LoginRequiredMixin, CreateView):
         super().form_valid(form)
         
         if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({"status": "success", "url": self.success_url})
+            html = render_to_string(
+                "cloud/includes/media_card.html", 
+                {"item": self.object}, 
+                request=self.request
+            )
+            return JsonResponse({"status": "success", "html": html})
         return redirect(self.success_url)
 
     def form_invalid(self, form):
