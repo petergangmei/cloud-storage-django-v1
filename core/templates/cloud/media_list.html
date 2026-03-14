@@ -120,63 +120,56 @@
         z-index: 2100;
     }
 
-    /* Upload UI */
-    .upload-progress-overlay {
+    /* Upload UI - Non-blocking Toast */
+    .upload-progress-toast {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        bottom: 30px;
+        right: 30px;
+        width: 320px;
         background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(10px);
-        z-index: 4000;
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: white;
-    }
-
-    .drop-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(13, 110, 253, 0.15);
-        border: 5px dashed var(--bs-primary);
-        z-index: 3000;
-        display: none;
-        pointer-events: none;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .drop-overlay-content {
-        background: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(15px);
-        padding: 50px;
-        border-radius: 30px;
-        text-align: center;
         border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 18px;
+        z-index: 5000;
+        display: none;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+        color: white;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: translateX(400px);
     }
 
-    .progress-wrapper {
-        width: 350px;
-        margin-top: 25px;
+    .upload-progress-toast.active {
+        display: block;
+        transform: translateX(0);
     }
 
-    .progress {
-        height: 8px;
+    .upload-icon-small {
+        width: 45px;
+        height: 45px;
+        background: rgba(13, 110, 253, 0.15);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .progress-compact {
+        height: 6px;
         background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
+        border-radius: 3px;
         overflow: hidden;
+        margin-top: 12px;
     }
 
-    .progress-bar {
+    .progress-bar-compact {
+        height: 100%;
         background: linear-gradient(90deg, var(--bs-primary), #00d2ff);
         transition: width 0.3s ease;
     }
+
+    .tiny-text { font-size: 11px; }
 
     .btn-upload-nav {
         background: var(--glass-bg);
@@ -244,22 +237,23 @@
     </div>
 </div>
 
-<!-- Upload Progress Overlay -->
-<div class="upload-progress-overlay" id="uploadOverlay">
-    <div class="text-center">
-        <div class="mb-4">
-            <i class="fas fa-cloud-arrow-up fa-4x text-primary animate-bounce"></i>
+<!-- Upload Progress Toast (Non-blocking) -->
+<div class="upload-progress-toast" id="uploadOverlay">
+    <div class="d-flex align-items-center mb-1">
+        <div class="upload-icon-small me-3">
+            <i class="fas fa-cloud-arrow-up text-primary"></i>
         </div>
-        <h4 id="uploadStatus">Uploading your media...</h4>
-        <div class="progress-wrapper">
-            <div class="progress">
-                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
-            </div>
-            <div class="d-flex justify-content-between mt-3 px-1 small text-secondary">
-                <span id="progressText">0%</span>
-                <span id="filesCount">Preparing...</span>
-            </div>
+        <div class="flex-grow-1 overflow-hidden">
+            <h6 class="mb-0 text-truncate" id="uploadStatus">Uploading...</h6>
+            <div class="tiny-text text-secondary" id="filesCount">Preparing...</div>
         </div>
+    </div>
+    <div class="progress-compact">
+        <div class="progress-bar-compact" id="progressBar" style="width: 0%"></div>
+    </div>
+    <div class="mt-2 d-flex justify-content-between align-items-center">
+        <span class="tiny-text text-secondary" id="progressText">0%</span>
+        <span class="tiny-text text-primary">Background Upload</span>
     </div>
 </div>
 
@@ -388,8 +382,15 @@ function handleFiles(filesArray) {
 
     function uploadSingle() {
         if (currentIdx >= files.length) {
-            uploadStatus.innerText = "All set! Refreshing...";
-            setTimeout(() => location.reload(), 1200);
+            uploadStatus.innerText = "Upload Complete!";
+            filesCount.innerText = `${files.length} items added`;
+            progressBar.style.width = '100%';
+            progressText.innerText = '100%';
+            
+            setTimeout(() => {
+                uploadOverlay.classList.remove('active');
+                setTimeout(() => location.reload(), 500);
+            }, 1000);
             return;
         }
 
@@ -397,9 +398,11 @@ function handleFiles(filesArray) {
         currentIdx++;
         
         // Update UI
-        uploadOverlay.style.display = 'flex';
-        uploadStatus.innerText = `Uploading ${file.name}...`;
-        filesCount.innerText = `Preparing file ${currentIdx} of ${files.length}`;
+        uploadOverlay.style.display = 'block';
+        setTimeout(() => uploadOverlay.classList.add('active'), 10);
+        
+        uploadStatus.innerText = `Uploading ${file.name}`;
+        filesCount.innerText = `Item ${currentIdx} of ${files.length}`;
         progressBar.style.width = '0%';
         progressText.innerText = '0%';
 
