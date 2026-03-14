@@ -171,6 +171,34 @@
 
     .tiny-text { font-size: 11px; }
 
+    /* Drag & Drop Visuals */
+    .drop-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(13, 110, 253, 0.15);
+        border: 5px dashed var(--bs-primary);
+        z-index: 6000; /* Higher than toast and viewer */
+        display: none;
+        pointer-events: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+
+    .drop-overlay-content {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(15px);
+        padding: 50px;
+        border-radius: 30px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
     .btn-upload-nav {
         background: var(--glass-bg);
         border: 1px solid var(--glass-border);
