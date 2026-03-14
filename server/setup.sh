@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# -----------------------------------------------------------------------------
+# Cloud Gallery - Automated Deployment Script (uv version)
+# -----------------------------------------------------------------------------
+
 # Load centralized deployment variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/deploy.env" ]; then
@@ -8,6 +12,9 @@ else
     echo "Error: deploy.env not found in $SCRIPT_DIR"
     exit 1
 fi
+
+# Ensure uv is in the PATH
+export PATH="$HOME/.local/bin:$PATH"
 
 # Add menu to choose between new, old, and restart-only instance
 echo "---------------------------------------"
@@ -81,15 +88,11 @@ if [[ "$choice" == "1" ]]; then
     # Install uv for Python package management
     echo "Installing uv..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    # Ensure uv is in the path for the current script
-    export PATH="$HOME/.local/bin:$PATH"
-
+    
     # Install Virtualenv
     sudo apt-get install python3-venv -y
 else
     echo "Selected: Old Instance - Skipping system dependencies installation..."
-    # Ensure uv is in the path even for old instances
-    export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Common steps for both new and old instances
@@ -130,25 +133,15 @@ sudo nginx -t
 sudo systemctl restart nginx
 sudo systemctl reload nginx
 
-# Create virtual environment using uv
-echo "Creating virtual environment with uv..."
+# Create/Sync virtual environment using uv
+echo "Syncing dependencies with uv..."
 cd "$DEPLOY_PATH/$TARGET_DIR"
-uv venv "$DEPLOY_PATH/$TARGET_DIR/venv"
 
-# Change ownership and permissions
-sudo chown -R $USER:$USER "$DEPLOY_PATH/$TARGET_DIR/venv"
-sudo chmod -R 755 "$DEPLOY_PATH/$TARGET_DIR/venv"
-sudo chmod -R 755 "$DEPLOY_PATH/$TARGET_DIR/server"
-
-# Install requirements using uv
-echo "Installing requirements with uv..."
-source "$DEPLOY_PATH/$TARGET_DIR/venv/bin/activate"
-
-# Sync dependencies from pyproject.toml / uv.lock
+# uv sync handles venv creation and package installation in one go
 uv sync --frozen
 
 # Migrate
-echo "Migrating..."
+echo "Migrating DB..."
 uv run python manage.py migrate --settings=config.settings.production
 
 # Collect static
