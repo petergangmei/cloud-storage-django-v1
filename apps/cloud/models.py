@@ -1,6 +1,26 @@
+import os
+import time
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+
+def get_upload_path(instance, filename):
+    """
+    Generate a unique filename using timestamp and UUID.
+    Format: cloud/YYYY/MM/DD/[timestamp]_[uuid].[ext]
+    """
+    ext = filename.split(".")[-1]
+    # Use short UUID (first 8 chars) for readability while maintaining high uniqueness
+    unique_id = uuid.uuid4().hex[:8]
+    timestamp = int(time.time())
+    new_filename = f"{timestamp}_{unique_id}.{ext}"
+    
+    # Use standard date-based directory structure
+    date_path = time.strftime("%Y/%m/%d")
+    return os.path.join("cloud", date_path, new_filename)
 
 
 class CloudMedia(models.Model):
@@ -13,7 +33,7 @@ class CloudMedia(models.Model):
         on_delete=models.CASCADE,
         related_name="cloud_media",
     )
-    file = models.FileField(upload_to="cloud/%Y/%m/%d/")
+    file = models.FileField(upload_to=get_upload_path)
     media_type = models.CharField(
         max_length=10,
         choices=MediaType.choices,
