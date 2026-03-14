@@ -17,11 +17,24 @@ class MediaListView(LoginRequiredMixin, ListView):
 from django.http import JsonResponse
 
 
+from django.shortcuts import redirect
+
+
 class MediaUploadView(LoginRequiredMixin, CreateView):
     model = CloudMedia
     form_class = CloudMediaForm
-    template_name = "cloud/media_form.html"
     success_url = reverse_lazy("cloud:media_list")
+
+    def get(self, request, *args, **kwargs):
+        return redirect("cloud:media_list")
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        if 'media_type' in form.fields:
+            form.fields['media_type'].required = False
+            # Also ensure it doesn't have the default 'required' attribute in HTML
+            form.fields['media_type'].widget.attrs.pop('required', None)
+        return form
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -33,14 +46,17 @@ class MediaUploadView(LoginRequiredMixin, CreateView):
             else:
                 form.instance.media_type = CloudMedia.MediaType.IMAGE
         
-        response = super().form_valid(form)
+        super().form_valid(form)
         
         if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({"status": "success", "url": self.success_url})
-        return response
+        return redirect(self.success_url)
 
     def form_invalid(self, form):
-        response = super().form_invalid(form)
         if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({"status": "error", "errors": form.errors.as_json()}, status=400)
-        return response
+            import json
+            return JsonResponse({
+                "status": "error", 
+                "errors": json.loads(form.errors.as_json())
+            }, status=400)
+        return redirect("cloud:media_list")
