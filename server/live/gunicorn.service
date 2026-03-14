@@ -1,0 +1,15 @@
+[Unit]
+Description=Gunicorn daemon for Django app (Live)
+After=network.target
+
+[Service]
+Environment="DJANGO_SETTINGS_MODULE=config.settings.production"
+User={{DEPLOY_USER}}
+WorkingDirectory={{DEPLOY_PATH}}/{{LIVE_FOLDER}}
+ExecStart={{DEPLOY_PATH}}/{{LIVE_FOLDER}}/venv/bin/gunicorn --workers 3 --timeout 120 --max-requests 1000 --max-requests-jitter 50 --bind unix:{{DEPLOY_PATH}}/{{LIVE_FOLDER}}/app.sock config.wsgi:application
+
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
