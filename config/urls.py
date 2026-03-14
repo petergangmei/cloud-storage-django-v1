@@ -21,6 +21,7 @@ urlpatterns = [
     # User management
     path("users/", include("core.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    path("cloud/", include("apps.cloud.urls", namespace="cloud")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
