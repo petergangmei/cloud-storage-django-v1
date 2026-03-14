@@ -89,9 +89,10 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.95);
+    background: #000000;
     z-index: 2000;
     display: none;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     opacity: 0;
@@ -103,14 +104,91 @@
     opacity: 1;
   }
 
+  .viewer-toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2100;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+  }
+
+  .viewer-toolbar-left, .viewer-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .viewer-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .viewer-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .viewer-btn.btn-back {
+    font-size: 24px;
+  }
+
+  .viewer-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2100;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+  }
+
+  .viewer-modal.active .viewer-nav-btn {
+    opacity: 0.6;
+  }
+
+  .viewer-nav-btn:hover {
+    opacity: 1 !important;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .nav-prev { left: 20px; }
+  .nav-next { right: 20px; }
+
   .viewer-content {
-    width: 95%;
+    width: 100%;
     height: 90vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
+    padding: 0 80px;
   }
 
   .viewer-content img,
@@ -118,18 +196,18 @@
     max-height: 100%;
     max-width: 100%;
     object-fit: contain;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
   }
 
-  .viewer-close {
+  .viewer-info {
     position: absolute;
-    top: 20px;
-    right: 30px;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
     color: white;
-    font-size: 40px;
-    background: none;
-    border: none;
-    cursor: pointer;
+    text-align: center;
     z-index: 2100;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
   }
 
   /* Upload UI - Non-blocking Toast */
@@ -303,10 +381,37 @@
 
 <!-- Media Viewer Modal -->
 <div class="viewer-modal" id="viewerModal">
-  <button class="viewer-close" onclick="closeViewer()">&times;</button>
+  <div class="viewer-toolbar">
+    <div class="viewer-toolbar-left">
+      <button class="viewer-btn btn-back" onclick="closeViewer()" title="Back">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+    </div>
+    <div class="viewer-toolbar-right">
+      <button class="viewer-btn" title="Share"><i class="fas fa-share-alt"></i></button>
+      <button class="viewer-btn" title="Favorite"><i class="far fa-star"></i></button>
+      <button class="viewer-btn" title="Edit"><i class="fas fa-pen"></i></button>
+      <button class="viewer-btn" title="Info"><i class="fas fa-info-circle"></i></button>
+      <button class="viewer-btn" title="Delete"><i class="far fa-trash-alt"></i></button>
+      <button class="viewer-btn" title="More"><i class="fas fa-ellipsis-v"></i></button>
+    </div>
+  </div>
+
+  <button class="viewer-nav-btn nav-prev" onclick="prevMedia()" title="Previous">
+    <i class="fas fa-chevron-left"></i>
+  </button>
+  
   <div class="viewer-content">
     <div id="viewerMediaContainer"></div>
-    <h4 id="viewerTitle" class="mt-4 text-center text-white opacity-75"></h4>
+  </div>
+
+  <button class="viewer-nav-btn nav-next" onclick="nextMedia()" title="Next">
+    <i class="fas fa-chevron-right"></i>
+  </button>
+
+  <div class="viewer-info">
+    <h5 id="viewerTitle" class="mb-1"></h5>
+    <div id="viewerDate" class="tiny-text opacity-50"></div>
   </div>
 </div>
 {% endblock content %} {% block inline_javascript %}
@@ -332,12 +437,53 @@
     }
   }
 
+  // Global Gallery Data Tracking
+  let currentMediaIndex = -1;
+  let galleryItems = [];
+
+  function updateGalleryData() {
+    const cards = document.querySelectorAll(".media-card");
+    galleryItems = Array.from(cards).map((card) => {
+      // Find the image or video within the card to get the URL
+      const img = card.querySelector("img");
+      const video = card.querySelector("video");
+      const type = img ? "IMAGE" : "VIDEO";
+      const fileUrl = img ? img.src : video.querySelector("source").src;
+      // Extract title from card if available, or use filename
+      const title = img ? img.alt : "";
+
+      return {
+        url: fileUrl,
+        type: type,
+        title: title,
+        element: card,
+      };
+    });
+  }
+
+  // Initial data harvest
+  updateGalleryData();
+
   // Viewer Logic
   function openViewer(url, type, title) {
     const container = document.getElementById("viewerMediaContainer");
     const modal = document.getElementById("viewerModal");
     const titleElem = document.getElementById("viewerTitle");
 
+    // Refresh gallery data to ensure index is correct (especially after AJAX uploads)
+    updateGalleryData();
+    currentMediaIndex = galleryItems.findIndex((item) => item.url === url);
+
+    renderViewerMedia(url, type, title);
+
+    modal.style.display = "flex";
+    setTimeout(() => modal.classList.add("active"), 10);
+    document.body.style.overflow = "hidden";
+  }
+
+  function renderViewerMedia(url, type, title) {
+    const container = document.getElementById("viewerMediaContainer");
+    const titleElem = document.getElementById("viewerTitle");
     container.innerHTML = "";
     titleElem.innerText = title || "";
 
@@ -354,10 +500,21 @@
       video.className = "rounded shadow-lg";
       container.appendChild(video);
     }
+  }
 
-    modal.style.display = "flex";
-    setTimeout(() => modal.classList.add("active"), 10);
-    document.body.style.overflow = "hidden";
+  function nextMedia() {
+    if (galleryItems.length === 0) return;
+    currentMediaIndex = (currentMediaIndex + 1) % galleryItems.length;
+    const item = galleryItems[currentMediaIndex];
+    renderViewerMedia(item.url, item.type, item.title);
+  }
+
+  function prevMedia() {
+    if (galleryItems.length === 0) return;
+    currentMediaIndex =
+      (currentMediaIndex - 1 + galleryItems.length) % galleryItems.length;
+    const item = galleryItems[currentMediaIndex];
+    renderViewerMedia(item.url, item.type, item.title);
   }
 
   function closeViewer() {
@@ -507,9 +664,14 @@
     uploadSingle();
   }
 
-  // keyboard ESC to close viewer
+  // keyboard ESC to close viewer, arrows to navigate
   window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeViewer();
+    const modal = document.getElementById("viewerModal");
+    if (modal.classList.contains("active")) {
+      if (e.key === "Escape") closeViewer();
+      if (e.key === "ArrowRight") nextMedia();
+      if (e.key === "ArrowLeft") prevMedia();
+    }
   });
 </script>
 {% endblock inline_javascript %}
