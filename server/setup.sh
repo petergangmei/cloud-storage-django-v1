@@ -71,14 +71,19 @@ fi
 
 # Function to ensure build dependencies are present
 ensure_build_deps() {
-    echo "Checking for PostgreSQL development headers..."
-    if ! command -v pg_config &> /dev/null; then
-        echo "PostgreSQL headers (pg_config) not found. This is required to build psycopg[c]."
-        echo "Installing libpq-dev and build-essential..."
+    echo "Verifying PostgreSQL development headers and build tools..."
+    
+    # Check for pg_config.h specifically, as pg_config command alone isn't enough
+    HEADER_FOUND=$(find /usr/include -name pg_config.h 2>/dev/null | head -n 1)
+    
+    if [ -z "$HEADER_FOUND" ]; then
+        echo "PostgreSQL development headers not found. Installing libpq-dev, postgresql-server-dev-all, and build-essential..."
         sudo apt-get update
-        sudo apt-get install -y postgresql-server-dev-all libpq-dev build-essential
+        sudo apt-get install -y postgresql-server-dev-all libpq-dev build-essential python3-dev
     else
-        echo "PostgreSQL headers found at: $(command -v pg_config)"
+        echo "PostgreSQL headers found at: $HEADER_FOUND"
+        # Still ensure build-essential and python3-dev are present
+        sudo apt-get install -y build-essential python3-dev
     fi
 }
 
@@ -172,9 +177,11 @@ sudo systemctl reload nginx
 echo "Syncing dependencies with uv..."
 cd "$DEPLOY_PATH/$TARGET_DIR"
 
+# Clear uv build cache for psycopg specifically to avoid using stale failed builds
+echo "Cleaning uv build cache for psycopg..."
+uv cache clean psycopg-c psycopg
+
 # Ensure we are using the venv specified in gunicorn service
-# uv sync will create/update the .venv in the current directory if not redirected
-# We'll use the environment variable to point uv to the correct venv
 export UV_PROJECT_ENVIRONMENT="$DEPLOY_PATH/$TARGET_DIR/venv"
 
 # Sync dependencies from pyproject.toml / uv.lock
