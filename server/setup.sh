@@ -179,10 +179,6 @@ sudo systemctl reload nginx
 echo "Syncing dependencies with uv..."
 cd "$DEPLOY_PATH/$TARGET_DIR"
 
-# Clear uv build cache for psycopg specifically to avoid using stale failed builds
-echo "Cleaning uv build cache for psycopg..."
-uv cache clean psycopg-c psycopg
-
 # Ensure we are using the venv specified in gunicorn service
 export UV_PROJECT_ENVIRONMENT="$DEPLOY_PATH/$TARGET_DIR/venv"
 
