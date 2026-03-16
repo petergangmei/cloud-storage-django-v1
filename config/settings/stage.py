@@ -17,7 +17,7 @@ CSRF_TRUSTED_ORIGINS = ["https://cloud.mepeter.com", "https://mepeter.com"]
 # ------------------------------------------------------------------------------
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
 
-DEBUG=True
+DEBUG=False
 # CACHES
 # ------------------------------------------------------------------------------
 # CACHES = {
