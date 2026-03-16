@@ -187,5 +187,8 @@ SPECTACULAR_SETTINGS["SERVERS"] = [
 ]
 # Your stuff...
 # ------------------------------------------------------------------------------
-# Allauth / proxy IP handling – match working ruangmei setup
-ACCOUNT_TRUSTED_PROXY_COUNT = 1
+# Allauth rate limiting / IP handling (see django-allauth docs)
+# We are behind a single trusted proxy (Cloudflare tunnel + nginx),
+# so allow allauth to trust one proxy and use the Cloudflare header
+ALLAUTH_TRUSTED_PROXY_COUNT = 1
+ALLAUTH_TRUSTED_CLIENT_IP_HEADER = "CF-Connecting-IP"
