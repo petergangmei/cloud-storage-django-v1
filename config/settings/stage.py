@@ -193,3 +193,7 @@ IPWARE_META_PRECEDENCE_ORDER = (
     "HTTP_X_FORWARDED_FOR",
     "REMOTE_ADDR",
 )
+
+# Relax login attempt IP checks in staging so allauth does not
+# reject logins when the client IP cannot be reliably determined
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = None
